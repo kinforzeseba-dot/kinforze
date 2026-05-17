@@ -104,10 +104,13 @@
               <p class="eyebrow">Beneficios</p>
               <h2>Desbloquea premios por tu desempeno mensual</h2>
             </div>
-            <p>
-              Cada beneficio se calcula con tus pacientes mensuales. Cuando tu registro suba en
-              Google Sheets, tu avance se actualizara automaticamente.
-            </p>
+            <div class="sync-panel">
+              <p>
+                Cada beneficio se calcula con tus pacientes mensuales. Cuando tu registro suba en
+                Google Sheets, actualiza los datos para ver tu avance.
+              </p>
+              <button class="sync-button" id="refreshDataButton" type="button">Actualizar datos</button>
+            </div>
           </div>
           <div class="benefits-grid" id="benefitsGrid"></div>
         </section>
@@ -119,7 +122,7 @@
                 <p class="eyebrow">Mi avance</p>
                 <h2>Tu progreso mensual</h2>
               </div>
-              <span class="panel-note">Datos conectados a Google Sheets.</span>
+              <span class="panel-note" id="dataStatus">Datos conectados a Google Sheets.</span>
             </div>
             <div class="professional-list" id="professionalList"></div>
           </section>

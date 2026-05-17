@@ -89,9 +89,12 @@ const accessCodeInput = document.querySelector("#accessCode");
 const accessError = document.querySelector("#accessError");
 const logoutButton = document.querySelector("#logoutButton");
 const closeSessionButton = document.querySelector("#closeSessionButton");
+const refreshDataButton = document.querySelector("#refreshDataButton");
+const dataStatus = document.querySelector("#dataStatus");
 const welcomeTitle = document.querySelector("#welcomeTitle");
 const config = window.KINFORZE_CONFIG || {};
 let currentProfessional = null;
+let currentAccessCode = "";
 
 function getSavedAccessCode() {
   try {
@@ -157,7 +160,7 @@ function normalizeHeader(value) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "");
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function csvRowsToObjects(csvText) {
@@ -191,7 +194,15 @@ function mapProfessional(row) {
   return {
     name: cleanText(row.nombre || row.name),
     specialty: cleanText(row.especialidad || row.specialty),
-    monthlyPatients: Number(row.pacientesmensuales || row.pacientes || row.monthlypatients || 0),
+    monthlyPatients: Number(
+      row.pacientesmensuales ||
+        row.pacientesmensual ||
+        row.pacientes ||
+        row.pacientesatendidos ||
+        row.pacientesdelmes ||
+        row.monthlypatients ||
+        0,
+    ),
     activeTime: cleanText(row.tiempoactivo || row.antiguedad || row.mesesactivo || row.activetime),
   };
 }
@@ -263,8 +274,15 @@ async function loadSheetData() {
 
     if (sheetProfessionals.length) {
       professionals = sheetProfessionals;
+      dataStatus.textContent = `Actualizado desde Google Sheets: ${new Date().toLocaleTimeString("es-CL", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    } else {
+      dataStatus.textContent = "La planilla no entrego filas validas. Revisa los encabezados.";
     }
   } catch (error) {
+    dataStatus.textContent = "No se pudo leer Google Sheets. Se muestran datos locales.";
     console.warn("No se pudo cargar la planilla de profesionales. Se usaran datos locales.");
   }
 }
@@ -433,7 +451,8 @@ function handleAccess(code) {
     return;
   }
 
-  saveAccessCode(code.trim().toLowerCase());
+  currentAccessCode = code.trim().toLowerCase();
+  saveAccessCode(currentAccessCode);
   accessError.textContent = "";
   showPortal(professional);
 }
@@ -445,6 +464,7 @@ accessForm.addEventListener("submit", (event) => {
 
 logoutButton.addEventListener("click", () => {
   clearSavedAccessCode();
+  currentAccessCode = "";
   currentProfessional = null;
   document.body.classList.add("access-locked");
   document.body.classList.remove("access-granted");
@@ -455,6 +475,7 @@ logoutButton.addEventListener("click", () => {
 
 closeSessionButton.addEventListener("click", () => {
   clearSavedAccessCode();
+  currentAccessCode = "";
   currentProfessional = null;
   document.body.classList.add("access-locked");
   document.body.classList.remove("access-granted");
@@ -463,6 +484,33 @@ closeSessionButton.addEventListener("click", () => {
   accessCodeInput.focus();
 });
 
+async function refreshSheetData() {
+  if (!currentProfessional && !currentAccessCode) return;
+
+  refreshDataButton.disabled = true;
+  refreshDataButton.textContent = "Actualizando...";
+  dataStatus.textContent = "Leyendo Google Sheets...";
+
+  const professionalName = currentAccessCode
+    ? accessCodes[currentAccessCode]
+    : currentProfessional?.name;
+
+  await loadSheetData();
+
+  const professional = professionalName ? findProfessionalByName(professionalName) : null;
+  if (professional) {
+    showPortal(professional);
+  } else {
+    renderAll();
+    dataStatus.textContent = "No encontre este profesional en la planilla.";
+  }
+
+  refreshDataButton.disabled = false;
+  refreshDataButton.textContent = "Actualizar datos";
+}
+
+refreshDataButton.addEventListener("click", refreshSheetData);
+
 async function init() {
   await loadSheetData();
   const savedCode = getSavedAccessCode();
@@ -470,6 +518,7 @@ async function init() {
   if (savedCode && accessCodes[savedCode]) {
     const professional = findProfessionalByName(accessCodes[savedCode]);
     if (professional) {
+      currentAccessCode = savedCode;
       showPortal(professional);
       return;
     }
