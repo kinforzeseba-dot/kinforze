@@ -52,13 +52,14 @@ const benefits = [
       "Al completar 5 pacientes en el mes, desbloqueas una bebida energetica para acompanar tus dias de alta demanda.",
   },
   {
-    brand: "McDonald's",
+    brand: "Matiz",
     mark: "M",
-    tone: "mcdonalds",
-    title: "Combo mensual",
+    tone: "matiz",
+    title: "Manicure esmaltado permanente",
     threshold: 10,
+    womenOnly: true,
     description:
-      "Al completar 10 pacientes mensuales, puedes acceder a un combo para reconocer tu esfuerzo clinico del mes.",
+      "Al completar 10 pacientes mensuales, accedes a un servicio de manicure con esmaltado permanente. Beneficio valido solo para mujeres.",
   },
 ];
 
@@ -67,22 +68,15 @@ const scholarships = [
     title: "Metodo EDT",
     description:
       "Una beca para fortalecer tu razonamiento clinico y tomar mejores decisiones frente a cada paciente.",
-    threshold: "30+ pacientes mensuales",
-    requirements: ["Mas de 8 meses activo en Kinforze", "Mas de 30 pacientes atendidos al mes"],
+    threshold: "40+ pacientes mensuales",
+    requirements: ["Mas de 8 meses activo en Kinforze", "Mas de 40 pacientes atendidos al mes"],
   },
   {
     title: "Diplomado en ecografia musculoesqueletica",
     description:
       "Una ruta para sumar precision diagnostica, mirar con mas detalle y elevar tu seguridad terapeutica.",
-    threshold: "15+ pacientes mensuales",
-    requirements: ["Mas de 8 meses activo en Kinforze", "Mas de 15 pacientes atendidos al mes"],
-  },
-  {
-    title: "Electrolisis percutanea",
-    description:
-      "Formacion avanzada para ampliar tus herramientas de intervencion y responder mejor a casos complejos.",
-    threshold: "35+ pacientes mensuales",
-    requirements: ["Mas de 8 meses activo en Kinforze", "Mas de 35 pacientes atendidos al mes"],
+    threshold: "20+ pacientes mensuales",
+    requirements: ["Mas de 8 meses activo en Kinforze", "Mas de 20 pacientes atendidos al mes"],
   },
 ];
 
@@ -94,6 +88,7 @@ const accessForm = document.querySelector("#accessForm");
 const accessCodeInput = document.querySelector("#accessCode");
 const accessError = document.querySelector("#accessError");
 const logoutButton = document.querySelector("#logoutButton");
+const closeSessionButton = document.querySelector("#closeSessionButton");
 const welcomeTitle = document.querySelector("#welcomeTitle");
 const config = window.KINFORZE_CONFIG || {};
 let currentProfessional = null;
@@ -206,6 +201,11 @@ function iconForProfessional(professional) {
   return name.includes("analis") || name.includes("jeslein") ? "female" : "male";
 }
 
+function isFemaleProfessional(professional) {
+  if (!professional) return false;
+  return iconForProfessional(professional) === "female";
+}
+
 function benefitIcon(tone) {
   const icons = {
     starbucks: `
@@ -228,15 +228,17 @@ function benefitIcon(tone) {
         <path d="M36 24h4" />
       </svg>
     `,
-    mcdonalds: `
+    matiz: `
       <svg viewBox="0 0 64 64" aria-hidden="true">
-        <path d="M12 32c2-11 11-18 20-18s18 7 20 18H12Z" />
-        <path d="M10 37h44" />
-        <path d="M13 44h38" />
-        <path d="M16 51h32" />
-        <path d="M22 24h1" />
-        <path d="M32 21h1" />
-        <path d="M42 25h1" />
+        <path d="M18 54V30c0-4 6-4 6 0v13" />
+        <path d="M24 43V22c0-4 6-4 6 0v20" />
+        <path d="M30 42V18c0-4 6-4 6 0v24" />
+        <path d="M36 43V22c0-4 6-4 6 0v22" />
+        <path d="M42 44V30c0-4 6-4 6 0v13c0 12-7 17-15 17h-3c-7 0-12-4-12-6" />
+        <path d="M19 52c-5-5-7-9-8-15-1-4 4-6 7-2l5 7" />
+        <path d="M25 9h5" />
+        <path d="M31 6h5" />
+        <path d="M38 9h5" />
       </svg>
     `,
   };
@@ -305,7 +307,11 @@ function renderProfessionals() {
 
 function renderStats() {
   const monthlyPatients = currentProfessional?.monthlyPatients || 0;
-  const unlockedBenefits = benefits.filter((benefit) => monthlyPatients >= benefit.threshold).length;
+  const unlockedBenefits = benefits.filter(
+    (benefit) =>
+      monthlyPatients >= benefit.threshold &&
+      (!benefit.womenOnly || isFemaleProfessional(currentProfessional)),
+  ).length;
 
   document.querySelector("#professionalCount").textContent = currentProfessional ? "1" : "0";
   document.querySelector("#professionalLabel").textContent =
@@ -322,11 +328,12 @@ function renderBenefits() {
 
   benefitsGrid.innerHTML = benefits
     .map((benefit) => {
-      const unlocked = patientTotal >= benefit.threshold;
+      const restricted = benefit.womenOnly && !isFemaleProfessional(currentProfessional);
+      const unlocked = patientTotal >= benefit.threshold && !restricted;
       const progress = Math.min(100, Math.round((patientTotal / benefit.threshold) * 100));
 
       return `
-        <article class="reward-card ${benefit.tone}">
+        <article class="reward-card ${benefit.tone} ${restricted ? "restricted" : ""}">
           <div class="reward-top">
             <div class="reward-logo" aria-label="${benefit.brand}">
               ${benefitIcon(benefit.tone)}
@@ -336,6 +343,7 @@ function renderBenefits() {
           <div>
             <h3>${benefit.title}</h3>
             <p>${benefit.description}</p>
+            ${benefit.womenOnly ? `<span class="benefit-tag">Valido solo para mujeres</span>` : ""}
           </div>
           <div class="reward-progress">
             <div class="progress-head">
@@ -354,7 +362,7 @@ function renderBenefits() {
               <span>pacientes en un mes</span>
             </div>
             <span class="reward-status ${unlocked ? "unlocked" : ""}">
-              ${unlocked ? "Disponible" : `${progress}% avance`}
+              ${restricted ? "No aplicable" : unlocked ? "Disponible" : `${progress}% avance`}
             </span>
           </div>
         </article>
@@ -442,6 +450,16 @@ logoutButton.addEventListener("click", () => {
   document.body.classList.remove("access-granted");
   accessCodeInput.value = "";
   accessError.textContent = "";
+  accessCodeInput.focus();
+});
+
+closeSessionButton.addEventListener("click", () => {
+  clearSavedAccessCode();
+  currentProfessional = null;
+  document.body.classList.add("access-locked");
+  document.body.classList.remove("access-granted");
+  accessCodeInput.value = "";
+  accessError.textContent = "Sesion cerrada correctamente.";
   accessCodeInput.focus();
 });
 
