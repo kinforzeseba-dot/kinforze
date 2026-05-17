@@ -3,10 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kinforze Becas</title>
+    <title>Kinforze Beneficios</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body class="access-locked">
+    <section class="access-screen" id="accessScreen" aria-label="Acceso privado Kinforze">
+      <div class="access-brand">
+        <img src="./assets/kinforze-logo-transparent.png" alt="Kinforze by Medforze" />
+        <p>Portal de becas y beneficios profesionales</p>
+      </div>
+
+      <form class="access-card" id="accessForm">
+        <div>
+          <p class="eyebrow">Acceso personal</p>
+          <h1>Entra a tu espacio Kinforze.</h1>
+          <p>
+            Usa la clave que recibiste para revisar tu avance mensual, tus beneficios y las becas
+            disponibles para tu desarrollo profesional.
+          </p>
+        </div>
+        <label>
+          <span>Clave de acceso</span>
+          <input id="accessCode" type="password" placeholder="" autocomplete="off" />
+        </label>
+        <button type="submit">Entrar</button>
+        <p class="access-error" id="accessError" role="alert"></p>
+      </form>
+    </section>
+
     <div class="app-shell">
       <aside class="sidebar" aria-label="Navegacion principal">
         <a class="brand" href="#dashboard" aria-label="Kinforze">
@@ -14,120 +38,106 @@
         </a>
 
         <nav class="nav-list">
-          <a class="nav-item active" href="#dashboard">Dashboard</a>
-          <a class="nav-item" href="#becados">Profesionales</a>
+          <a class="nav-item active" href="#dashboard">Inicio</a>
+          <a class="nav-item" href="#beneficios">Beneficios</a>
           <a class="nav-item" href="#becas">Becas</a>
-          <a class="nav-item" href="#material">Material</a>
-          <a class="nav-item" href="#documentos">Documentos</a>
+          <a class="nav-item" href="#profesionales">Mi avance</a>
         </nav>
 
         <section class="sidebar-panel">
-          <span>Tu camino</span>
-          <strong>8+ meses activo</strong>
-          <p>Tu constancia clinica abre acceso a formacion, nuevas herramientas y mejores resultados.</p>
+          <span>Tu primera meta</span>
+          <strong>5 pacientes</strong>
+          <p>Desde esta meta mensual comienzas a desbloquear beneficios Kinforze.</p>
+          <button class="ghost-button" id="logoutButton" type="button">Cambiar usuario</button>
         </section>
       </aside>
 
       <main class="main-content" id="dashboard">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Kinforze Academy</p>
-            <h1>Becas creadas para impulsar tu crecimiento clinico</h1>
-          </div>
-          <div class="topbar-actions">
-            <label class="search-field">
-              <span>Buscar profesional</span>
-              <input id="searchInput" type="search" placeholder="Nombre o especialidad" />
-            </label>
+            <p class="eyebrow">Portal profesional Kinforze</p>
+            <h1 id="welcomeTitle">Beneficios que reconocen tu energia clinica.</h1>
           </div>
         </header>
 
         <section class="hero-band" aria-label="Resumen principal">
-          <div class="stethoscope-mark" aria-hidden="true">
-            <span class="tube tube-left"></span>
-            <span class="tube tube-right"></span>
-            <span class="chestpiece"></span>
-          </div>
-          <div class="hero-content">
-            <p class="hero-kicker">Beneficios de perfeccionamiento clinico</p>
-            <h2>Reconocimiento, formacion y proyeccion de tu talento.</h2>
+          <div class="hero-copy">
+            <p class="hero-kicker">Programa de reconocimiento mensual</p>
+            <h2>Alcanza tus metas, atiende mejor y recibe beneficios pensados para ti.</h2>
             <p>
-              Este espacio es para ti: revisa tus becas, llega a tus metas y accede a material
-              que fortalece tu criterio clinico para entregar un mejor servicio a cada paciente.
+              Si consigues la cantidad de pacientes indicada durante el mes, podras acceder a
+              beneficios que hacen mas liviana tu jornada y empoderan tu desarrollo profesional.
             </p>
-            <div class="hero-benefit-card">
-              <span>Empodera tu practica</span>
-              <strong>Si consigues la cantidad de pacientes en un mes, podras acceder a estos beneficios.</strong>
-            </div>
           </div>
+          <div class="hero-media" aria-hidden="true"></div>
         </section>
 
         <section class="stats-grid" aria-label="Indicadores clave">
           <article class="stat-card">
-            <span>Profesionales considerados</span>
+            <span>Profesional</span>
             <strong id="professionalCount">0</strong>
-            <small>Talento que Kinforze quiere acompanar</small>
+            <small id="professionalLabel">Acceso personal</small>
           </article>
           <article class="stat-card">
-            <span>Becas disponibles</span>
-            <strong>3</strong>
-            <small>Rutas para ampliar tu practica clinica</small>
-          </article>
-          <article class="stat-card">
-            <span>Pacientes mensuales</span>
+            <span>Tus pacientes</span>
             <strong id="monthlyPatients">0</strong>
-            <small>Tu impacto se ira registrando aqui</small>
+            <small>Registro mensual desde Google Sheets</small>
+          </article>
+          <article class="stat-card">
+            <span>Beneficios disponibles</span>
+            <strong id="benefitCount">0</strong>
+            <small>Segun tus metas actuales</small>
           </article>
           <article class="stat-card accent">
-            <span>Compromiso Kinforze</span>
-            <strong>8+</strong>
-            <small>Meses creciendo junto al equipo</small>
+            <span>Primera meta</span>
+            <strong>5</strong>
+            <small>Pacientes mensuales</small>
           </article>
         </section>
 
-        <section class="workspace-grid">
-          <section class="panel professional-panel" id="becados">
+        <section class="benefits-section" id="beneficios">
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Beneficios</p>
+              <h2>Desbloquea premios por tu desempeno mensual</h2>
+            </div>
+            <p>
+              Cada beneficio se calcula con tus pacientes mensuales. Cuando tu registro suba en
+              Google Sheets, tu avance se actualizara automaticamente.
+            </p>
+          </div>
+          <div class="benefits-grid" id="benefitsGrid"></div>
+        </section>
+
+        <section class="dashboard-grid">
+          <section class="panel professional-panel" id="profesionales">
             <div class="panel-header">
               <div>
-                <p class="eyebrow">Profesionales considerados</p>
-                <h2>Colegas que estan siendo considerados</h2>
+                <p class="eyebrow">Mi avance</p>
+                <h2>Tu progreso mensual</h2>
               </div>
-              <span class="panel-note">Un primer reconocimiento para quienes vienen construyendo camino en Kinforze.</span>
+              <span class="panel-note">Datos conectados a Google Sheets.</span>
             </div>
-
             <div class="professional-list" id="professionalList"></div>
           </section>
 
           <aside class="side-stack">
-            <section class="panel dark-panel">
-              <p class="eyebrow">Criterio ejecutivo</p>
-              <h2>Lo que miramos para cuidarte bien</h2>
-              <div class="criteria-list">
+            <section class="panel progress-panel">
+              <p class="eyebrow">Como funciona</p>
+              <h2>Simple y transparente</h2>
+              <div class="steps-list">
                 <div>
-                  <strong>8 meses</strong>
-                  <span>Tiempo minimo para reconocer compromiso, continuidad y presencia clinica.</span>
+                  <strong>1. Registra pacientes</strong>
+                  <span>Tu registro mensual se actualiza desde la planilla.</span>
                 </div>
                 <div>
-                  <strong>15 a 35 pacientes</strong>
-                  <span>Metas claras segun la beca, para que sepas exactamente hacia donde avanzar.</span>
+                  <strong>2. Revisa tu avance</strong>
+                  <span>La plataforma calcula tus beneficios y becas disponibles.</span>
                 </div>
                 <div>
-                  <strong>Mejor servicio</strong>
-                  <span>Mas formacion para que tus pacientes reciban una atencion cada vez mas completa.</span>
+                  <strong>3. Canjea beneficios</strong>
+                  <span>Al cumplir la meta, accedes al beneficio correspondiente.</span>
                 </div>
-              </div>
-            </section>
-            <section class="panel benefit-panel">
-              <p class="eyebrow">Beneficios</p>
-              <h2>Si logras la meta mensual</h2>
-              <p>
-                Si consigues esta cantidad de pacientes en un mes, podras acceder a beneficios
-                que empoderan tu desarrollo profesional.
-              </p>
-              <div class="benefit-list">
-                <span>Formacion especializada</span>
-                <span>Actualizacion clinica</span>
-                <span>Mejores herramientas para tus pacientes</span>
               </div>
             </section>
           </aside>
@@ -136,39 +146,9 @@
         <section class="section-block" id="becas">
           <div class="section-heading">
             <p class="eyebrow">Becas</p>
-            <h2>Tres rutas para elevar tu practica</h2>
+            <h2>Rutas de perfeccionamiento clinico</h2>
           </div>
           <div class="scholarship-grid" id="scholarshipGrid"></div>
-        </section>
-
-        <section class="material-grid">
-          <section class="panel upload-panel" id="material">
-            <div class="panel-header">
-              <div>
-                <p class="eyebrow">Material de estudio</p>
-                <h2>Comparte conocimiento con tu equipo</h2>
-              </div>
-            </div>
-            <p class="support-copy">
-              Carga aqui material de estudio para que tus colegas puedan actualizarse, preparar
-              mejores sesiones y sostener una atencion de alto nivel.
-            </p>
-            <label class="upload-zone">
-              <input id="materialInput" type="file" multiple />
-              <span>Seleccionar material</span>
-              <small>PDF, PPT, imagenes o documentos clinicos.</small>
-            </label>
-          </section>
-
-          <section class="panel documents-panel" id="documentos">
-            <div class="panel-header">
-              <div>
-                <p class="eyebrow">Documentos</p>
-                <h2>Encuentra aqui lo ultimo en rehabilitacion musculoesqueletica</h2>
-              </div>
-            </div>
-            <div class="document-list" id="documentList"></div>
-          </section>
         </section>
       </main>
     </div>

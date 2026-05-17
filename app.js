@@ -25,39 +25,102 @@ let professionals = [
   },
 ];
 
+const accessCodes = {
+  kf104: "Jenhery Valdebenito",
+  kf287: "Bayron Toro",
+  kf531: "Analis Gutierrez",
+  kf864: "Jeslein Jamett",
+};
+
+const benefits = [
+  {
+    brand: "Starbucks",
+    mark: "S",
+    tone: "starbucks",
+    title: "Bebida caliente o fria",
+    threshold: 7,
+    description:
+      "Al completar 7 pacientes en el mes, puedes acceder a una bebida para recargar energia entre jornadas.",
+  },
+  {
+    brand: "Monster",
+    mark: "M",
+    tone: "monster",
+    title: "Bebida energetica",
+    threshold: 5,
+    description:
+      "Al completar 5 pacientes en el mes, desbloqueas una bebida energetica para acompanar tus dias de alta demanda.",
+  },
+  {
+    brand: "McDonald's",
+    mark: "M",
+    tone: "mcdonalds",
+    title: "Combo mensual",
+    threshold: 10,
+    description:
+      "Al completar 10 pacientes mensuales, puedes acceder a un combo para reconocer tu esfuerzo clinico del mes.",
+  },
+];
+
 const scholarships = [
   {
     title: "Metodo EDT",
-    description: "Una beca para fortalecer tu razonamiento clinico y tomar mejores decisiones frente a cada paciente.",
+    description:
+      "Una beca para fortalecer tu razonamiento clinico y tomar mejores decisiones frente a cada paciente.",
     threshold: "30+ pacientes mensuales",
     requirements: ["Mas de 8 meses activo en Kinforze", "Mas de 30 pacientes atendidos al mes"],
   },
   {
-    title: "Ecografia musculoesqueletica",
-    description: "Una ruta para sumar precision diagnostica, mirar con mas detalle y elevar tu seguridad terapeutica.",
+    title: "Diplomado en ecografia musculoesqueletica",
+    description:
+      "Una ruta para sumar precision diagnostica, mirar con mas detalle y elevar tu seguridad terapeutica.",
     threshold: "15+ pacientes mensuales",
     requirements: ["Mas de 8 meses activo en Kinforze", "Mas de 15 pacientes atendidos al mes"],
   },
   {
     title: "Electrolisis percutanea",
-    description: "Formacion avanzada para ampliar tus herramientas de intervencion y responder mejor a casos complejos.",
+    description:
+      "Formacion avanzada para ampliar tus herramientas de intervencion y responder mejor a casos complejos.",
     threshold: "35+ pacientes mensuales",
     requirements: ["Mas de 8 meses activo en Kinforze", "Mas de 35 pacientes atendidos al mes"],
   },
 ];
 
-let studyMaterials = [
-  { name: "Guia base Metodo EDT", type: "Documento PDF", size: "Material inicial" },
-  { name: "Checklist Ecografia musculoesqueletica", type: "Documento clinico", size: "Material inicial" },
-  { name: "Protocolo Electrolisis percutanea", type: "Apunte de estudio", size: "Material inicial" },
-];
-
 const professionalList = document.querySelector("#professionalList");
 const scholarshipGrid = document.querySelector("#scholarshipGrid");
-const documentList = document.querySelector("#documentList");
-const searchInput = document.querySelector("#searchInput");
-const materialInput = document.querySelector("#materialInput");
+const benefitsGrid = document.querySelector("#benefitsGrid");
+const accessScreen = document.querySelector("#accessScreen");
+const accessForm = document.querySelector("#accessForm");
+const accessCodeInput = document.querySelector("#accessCode");
+const accessError = document.querySelector("#accessError");
+const logoutButton = document.querySelector("#logoutButton");
+const welcomeTitle = document.querySelector("#welcomeTitle");
 const config = window.KINFORZE_CONFIG || {};
+let currentProfessional = null;
+
+function getSavedAccessCode() {
+  try {
+    return window.sessionStorage?.getItem("kinforzeAccessCode") || "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function saveAccessCode(code) {
+  try {
+    window.sessionStorage?.setItem("kinforzeAccessCode", code);
+  } catch (error) {
+    // El portal sigue funcionando aunque el navegador bloquee sessionStorage.
+  }
+}
+
+function clearSavedAccessCode() {
+  try {
+    window.sessionStorage?.removeItem("kinforzeAccessCode");
+  } catch (error) {
+    // El cierre manual basta cuando el navegador no permite guardar sesion.
+  }
+}
 
 function parseCsv(csvText) {
   const rows = [];
@@ -123,44 +186,71 @@ async function loadCsv(url) {
   return csvRowsToObjects(await response.text());
 }
 
+function cleanText(value) {
+  return String(value || "")
+    .replace(/\s*\|\s*$/g, "")
+    .trim();
+}
+
 function mapProfessional(row) {
   return {
-    name: row.nombre || row.name,
-    specialty: row.especialidad || row.specialty,
+    name: cleanText(row.nombre || row.name),
+    specialty: cleanText(row.especialidad || row.specialty),
     monthlyPatients: Number(row.pacientesmensuales || row.pacientes || row.monthlypatients || 0),
-    activeTime: row.tiempoactivo || row.antiguedad || row.mesesactivo || row.activetime,
+    activeTime: cleanText(row.tiempoactivo || row.antiguedad || row.mesesactivo || row.activetime),
   };
 }
 
-function mapMaterial(row) {
-  return {
-    name: row.nombre || row.documento || row.name,
-    type: row.tipo || row.type || "Material de estudio",
-    size: row.detalle || row.size || "Planilla Kinforze",
+function iconForProfessional(professional) {
+  const name = professional.name.toLowerCase();
+  return name.includes("analis") || name.includes("jeslein") ? "female" : "male";
+}
+
+function benefitIcon(tone) {
+  const icons = {
+    starbucks: `
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M18 24h28v15a14 14 0 0 1-14 14 14 14 0 0 1-14-14V24Z" />
+        <path d="M46 29h4a7 7 0 0 1 0 14h-4" />
+        <path d="M16 54h34" />
+        <path d="M24 17c-2-4 2-6 0-10" />
+        <path d="M34 17c-2-4 2-6 0-10" />
+        <path d="M44 17c-2-4 2-6 0-10" />
+      </svg>
+    `,
+    monster: `
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M23 7h18l4 7v43H19V14l4-7Z" />
+        <path d="M20 15h24" />
+        <path d="M24 51h16" />
+        <path d="M34 22l-8 17h9l-4 12 10-20h-9l2-9Z" />
+        <path d="M25 24h4" />
+        <path d="M36 24h4" />
+      </svg>
+    `,
+    mcdonalds: `
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M12 32c2-11 11-18 20-18s18 7 20 18H12Z" />
+        <path d="M10 37h44" />
+        <path d="M13 44h38" />
+        <path d="M16 51h32" />
+        <path d="M22 24h1" />
+        <path d="M32 21h1" />
+        <path d="M42 25h1" />
+      </svg>
+    `,
   };
+
+  return icons[tone] || icons.starbucks;
 }
 
-function initials(name) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+function normalizeName(value) {
+  return normalizeHeader(value).replace(/[^a-z0-9]/g, "");
 }
 
-function formatFileSize(bytes) {
-  if (!bytes) return "Material cargado";
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function filteredProfessionals() {
-  const query = searchInput.value.trim().toLowerCase();
-
-  return professionals.filter((professional) =>
-    [professional.name, professional.specialty].join(" ").toLowerCase().includes(query),
-  );
+function findProfessionalByName(name) {
+  const target = normalizeName(name);
+  return professionals.find((professional) => normalizeName(professional.name) === target);
 }
 
 async function loadSheetData() {
@@ -175,27 +265,22 @@ async function loadSheetData() {
   } catch (error) {
     console.warn("No se pudo cargar la planilla de profesionales. Se usaran datos locales.");
   }
+}
 
-  try {
-    const sheetMaterials = (await loadCsv(config.materialsCsvUrl))
-      .map(mapMaterial)
-      .filter((material) => material.name);
-
-    if (sheetMaterials.length) {
-      studyMaterials = sheetMaterials;
-    }
-  } catch (error) {
-    console.warn("No se pudo cargar la planilla de materiales. Se usaran datos locales.");
-  }
+function highestMonthlyPatients() {
+  return currentProfessional?.monthlyPatients || 0;
 }
 
 function renderProfessionals() {
-  const cards = filteredProfessionals()
-    .map(
-      (professional) => `
+  const visibleProfessionals = currentProfessional ? [currentProfessional] : [];
+  const cards = visibleProfessionals
+    .map((professional) => {
+      const gender = iconForProfessional(professional);
+
+      return `
         <article class="professional-card">
           <div class="person">
-            <div class="avatar">${initials(professional.name)}</div>
+            <span class="professional-dot ${gender}" aria-hidden="true"></span>
             <div>
               <strong>${professional.name}</strong>
               <span>${professional.activeTime}</span>
@@ -210,28 +295,84 @@ function renderProfessionals() {
             <span>pacientes mensuales</span>
           </div>
         </article>
-      `,
-    )
+      `;
+    })
     .join("");
 
   professionalList.innerHTML =
-    cards || `<article class="professional-card">No hay profesionales para esta busqueda.</article>`;
+    cards || `<article class="professional-card empty-card">Ingresa con tu clave para ver tu avance personal.</article>`;
 }
 
 function renderStats() {
-  const totalPatients = professionals.reduce(
-    (sum, professional) => sum + professional.monthlyPatients,
-    0,
-  );
+  const monthlyPatients = currentProfessional?.monthlyPatients || 0;
+  const unlockedBenefits = benefits.filter((benefit) => monthlyPatients >= benefit.threshold).length;
 
-  document.querySelector("#professionalCount").textContent = professionals.length;
-  document.querySelector("#monthlyPatients").textContent = totalPatients;
+  document.querySelector("#professionalCount").textContent = currentProfessional ? "1" : "0";
+  document.querySelector("#professionalLabel").textContent =
+    currentProfessional?.specialty || "Acceso personal";
+  document.querySelector("#monthlyPatients").textContent = monthlyPatients;
+  document.querySelector("#benefitCount").textContent = unlockedBenefits;
+  welcomeTitle.textContent = currentProfessional
+    ? `${currentProfessional.name}, este es tu avance Kinforze.`
+    : "Beneficios que reconocen tu energia clinica.";
+}
+
+function renderBenefits() {
+  const patientTotal = highestMonthlyPatients();
+
+  benefitsGrid.innerHTML = benefits
+    .map((benefit) => {
+      const unlocked = patientTotal >= benefit.threshold;
+      const progress = Math.min(100, Math.round((patientTotal / benefit.threshold) * 100));
+
+      return `
+        <article class="reward-card ${benefit.tone}">
+          <div class="reward-top">
+            <div class="reward-logo" aria-label="${benefit.brand}">
+              ${benefitIcon(benefit.tone)}
+            </div>
+            <span>${benefit.brand}</span>
+          </div>
+          <div>
+            <h3>${benefit.title}</h3>
+            <p>${benefit.description}</p>
+          </div>
+          <div class="reward-progress">
+            <div class="progress-head">
+              <span>Progreso de logro</span>
+              <strong>${progress}%</strong>
+            </div>
+            <div class="benefit-progress"><span style="width: ${progress}%"></span></div>
+            <div class="progress-scale">
+              <small>${patientTotal} de ${benefit.threshold} pacientes</small>
+              <small>100%</small>
+            </div>
+          </div>
+          <div class="reward-bottom">
+            <div>
+              <strong>${benefit.threshold}</strong>
+              <span>pacientes en un mes</span>
+            </div>
+            <span class="reward-status ${unlocked ? "unlocked" : ""}">
+              ${unlocked ? "Disponible" : `${progress}% avance`}
+            </span>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function renderScholarships() {
+  const patientTotal = highestMonthlyPatients();
   scholarshipGrid.innerHTML = scholarships
     .map(
-      (scholarship) => `
+      (scholarship) => {
+        const threshold = Number(scholarship.threshold.match(/\d+/)?.[0] || 0);
+        const progress = Math.min(100, Math.round((patientTotal / threshold) * 100));
+        const unlocked = patientTotal >= threshold;
+
+        return `
         <article class="scholarship-card">
           <div>
             <p class="eyebrow">Beca</p>
@@ -241,63 +382,83 @@ function renderScholarships() {
           <ul class="requirement-list">
             ${scholarship.requirements.map((requirement) => `<li>${requirement}</li>`).join("")}
           </ul>
-          <div class="threshold">${scholarship.threshold}</div>
-        </article>
-      `,
-    )
-    .join("");
-}
-
-function renderDocuments() {
-  documentList.innerHTML = studyMaterials
-    .map(
-      (material, index) => `
-        <article class="document-item">
-          <div>
-            <strong>${material.name}</strong>
-            <span>${material.type} · ${material.size}</span>
+          <div class="scholarship-progress">
+            <div class="progress-head">
+              <span>Tu avance</span>
+              <strong>${progress}%</strong>
+            </div>
+            <div class="benefit-progress"><span style="width: ${progress}%"></span></div>
+            <div class="progress-scale">
+              <small>${patientTotal} de ${threshold} pacientes</small>
+              <small>100%</small>
+            </div>
           </div>
-          <a class="download-button" href="#" data-index="${index}">Descargar</a>
+          <div class="threshold">${unlocked ? "Beca disponible" : scholarship.threshold}</div>
         </article>
-      `,
+      `;
+      },
     )
     .join("");
 }
 
-searchInput.addEventListener("input", renderProfessionals);
+function renderAll() {
+  renderStats();
+  renderBenefits();
+  renderProfessionals();
+  renderScholarships();
+}
 
-materialInput.addEventListener("change", (event) => {
-  const files = Array.from(event.target.files);
+function showPortal(professional) {
+  currentProfessional = professional;
+  document.body.classList.remove("access-locked");
+  document.body.classList.add("access-granted");
+  renderAll();
+}
 
-  files.forEach((file) => {
-    studyMaterials.unshift({
-      name: file.name,
-      type: file.type || "Archivo de estudio",
-      size: formatFileSize(file.size),
-    });
-  });
+function handleAccess(code) {
+  const professionalName = accessCodes[code.trim().toLowerCase()];
+  const professional = professionalName ? findProfessionalByName(professionalName) : null;
 
-  renderDocuments();
-  materialInput.value = "";
+  if (!professional) {
+    accessError.textContent = "Clave no encontrada. Revisa que este escrita igual.";
+    accessCodeInput.focus();
+    return;
+  }
+
+  saveAccessCode(code.trim().toLowerCase());
+  accessError.textContent = "";
+  showPortal(professional);
+}
+
+accessForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  handleAccess(accessCodeInput.value);
 });
 
-documentList.addEventListener("click", (event) => {
-  const link = event.target.closest(".download-button");
-  if (!link) return;
-
-  event.preventDefault();
-  link.textContent = "Disponible";
-  setTimeout(() => {
-    link.textContent = "Descargar";
-  }, 1100);
+logoutButton.addEventListener("click", () => {
+  clearSavedAccessCode();
+  currentProfessional = null;
+  document.body.classList.add("access-locked");
+  document.body.classList.remove("access-granted");
+  accessCodeInput.value = "";
+  accessError.textContent = "";
+  accessCodeInput.focus();
 });
 
 async function init() {
   await loadSheetData();
-  renderStats();
-  renderProfessionals();
-  renderScholarships();
-  renderDocuments();
+  const savedCode = getSavedAccessCode();
+
+  if (savedCode && accessCodes[savedCode]) {
+    const professional = findProfessionalByName(accessCodes[savedCode]);
+    if (professional) {
+      showPortal(professional);
+      return;
+    }
+  }
+
+  document.body.classList.add("access-locked");
+  renderAll();
 }
 
 init();
