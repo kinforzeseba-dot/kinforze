@@ -69,6 +69,7 @@ const scholarships = [
     description:
       "Una beca para fortalecer tu razonamiento clinico y tomar mejores decisiones frente a cada paciente.",
     threshold: "40+ pacientes mensuales",
+    referencePrice: "$450.000 CLP",
     requirements: ["Mas de 8 meses activo en Kinforze", "Mas de 40 pacientes atendidos al mes"],
   },
   {
@@ -89,6 +90,7 @@ const accessCodeInput = document.querySelector("#accessCode");
 const accessError = document.querySelector("#accessError");
 const logoutButton = document.querySelector("#logoutButton");
 const closeSessionButton = document.querySelector("#closeSessionButton");
+const mobileCloseSessionButton = document.querySelector("#mobileCloseSessionButton");
 const refreshDataButton = document.querySelector("#refreshDataButton");
 const dataStatus = document.querySelector("#dataStatus");
 const welcomeTitle = document.querySelector("#welcomeTitle");
@@ -405,6 +407,11 @@ function renderScholarships() {
             <h3>${scholarship.title}</h3>
           </div>
           <p>${scholarship.description}</p>
+          ${
+            scholarship.referencePrice
+              ? `<div class="reference-price"><span>Precio referencial</span><strong>${scholarship.referencePrice}</strong></div>`
+              : ""
+          }
           <ul class="requirement-list">
             ${scholarship.requirements.map((requirement) => `<li>${requirement}</li>`).join("")}
           </ul>
@@ -462,26 +469,27 @@ accessForm.addEventListener("submit", (event) => {
   handleAccess(accessCodeInput.value);
 });
 
-logoutButton.addEventListener("click", () => {
+function returnToAccess(message = "") {
   clearSavedAccessCode();
   currentAccessCode = "";
   currentProfessional = null;
   document.body.classList.add("access-locked");
   document.body.classList.remove("access-granted");
   accessCodeInput.value = "";
-  accessError.textContent = "";
+  accessError.textContent = message;
   accessCodeInput.focus();
+}
+
+logoutButton.addEventListener("click", () => {
+  returnToAccess();
 });
 
 closeSessionButton.addEventListener("click", () => {
-  clearSavedAccessCode();
-  currentAccessCode = "";
-  currentProfessional = null;
-  document.body.classList.add("access-locked");
-  document.body.classList.remove("access-granted");
-  accessCodeInput.value = "";
-  accessError.textContent = "Sesion cerrada correctamente.";
-  accessCodeInput.focus();
+  returnToAccess("Sesion cerrada correctamente.");
+});
+
+mobileCloseSessionButton.addEventListener("click", () => {
+  returnToAccess("Sesion cerrada correctamente.");
 });
 
 async function refreshSheetData() {
