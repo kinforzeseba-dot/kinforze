@@ -1,4 +1,4 @@
-const professionals = [
+let professionals = [
   {
     name: "Jenhery Valdebenito",
     specialty: "Kinesiologia musculoesqueletica",
@@ -46,7 +46,7 @@ const scholarships = [
   },
 ];
 
-const studyMaterials = [
+let studyMaterials = [
   { name: "Guia base Metodo EDT", type: "Documento PDF", size: "Material inicial" },
   { name: "Checklist Ecografia musculoesqueletica", type: "Documento clinico", size: "Material inicial" },
   { name: "Protocolo Electrolisis percutanea", type: "Apunte de estudio", size: "Material inicial" },
@@ -57,6 +57,88 @@ const scholarshipGrid = document.querySelector("#scholarshipGrid");
 const documentList = document.querySelector("#documentList");
 const searchInput = document.querySelector("#searchInput");
 const materialInput = document.querySelector("#materialInput");
+const config = window.KINFORZE_CONFIG || {};
+
+function parseCsv(csvText) {
+  const rows = [];
+  let currentRow = [];
+  let currentValue = "";
+  let insideQuotes = false;
+
+  for (let index = 0; index < csvText.length; index += 1) {
+    const character = csvText[index];
+    const nextCharacter = csvText[index + 1];
+
+    if (character === '"' && insideQuotes && nextCharacter === '"') {
+      currentValue += '"';
+      index += 1;
+    } else if (character === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (character === "," && !insideQuotes) {
+      currentRow.push(currentValue.trim());
+      currentValue = "";
+    } else if ((character === "\n" || character === "\r") && !insideQuotes) {
+      if (character === "\r" && nextCharacter === "\n") index += 1;
+      currentRow.push(currentValue.trim());
+      if (currentRow.some(Boolean)) rows.push(currentRow);
+      currentRow = [];
+      currentValue = "";
+    } else {
+      currentValue += character;
+    }
+  }
+
+  currentRow.push(currentValue.trim());
+  if (currentRow.some(Boolean)) rows.push(currentRow);
+
+  return rows;
+}
+
+function normalizeHeader(value) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "");
+}
+
+function csvRowsToObjects(csvText) {
+  const rows = parseCsv(csvText);
+  const headers = rows.shift()?.map(normalizeHeader) || [];
+
+  return rows.map((row) =>
+    headers.reduce((result, header, index) => {
+      result[header] = row[index] || "";
+      return result;
+    }, {}),
+  );
+}
+
+async function loadCsv(url) {
+  if (!url) return [];
+
+  const response = await fetch(`${url}${url.includes("?") ? "&" : "?"}cache=${Date.now()}`);
+  if (!response.ok) throw new Error("No se pudo cargar la planilla");
+
+  return csvRowsToObjects(await response.text());
+}
+
+function mapProfessional(row) {
+  return {
+    name: row.nombre || row.name,
+    specialty: row.especialidad || row.specialty,
+    monthlyPatients: Number(row.pacientesmensuales || row.pacientes || row.monthlypatients || 0),
+    activeTime: row.tiempoactivo || row.antiguedad || row.mesesactivo || row.activetime,
+  };
+}
+
+function mapMaterial(row) {
+  return {
+    name: row.nombre || row.documento || row.name,
+    type: row.tipo || row.type || "Material de estudio",
+    size: row.detalle || row.size || "Planilla Kinforze",
+  };
+}
 
 function initials(name) {
   return name
@@ -79,6 +161,32 @@ function filteredProfessionals() {
   return professionals.filter((professional) =>
     [professional.name, professional.specialty].join(" ").toLowerCase().includes(query),
   );
+}
+
+async function loadSheetData() {
+  try {
+    const sheetProfessionals = (await loadCsv(config.professionalsCsvUrl))
+      .map(mapProfessional)
+      .filter((professional) => professional.name && professional.specialty);
+
+    if (sheetProfessionals.length) {
+      professionals = sheetProfessionals;
+    }
+  } catch (error) {
+    console.warn("No se pudo cargar la planilla de profesionales. Se usaran datos locales.");
+  }
+
+  try {
+    const sheetMaterials = (await loadCsv(config.materialsCsvUrl))
+      .map(mapMaterial)
+      .filter((material) => material.name);
+
+    if (sheetMaterials.length) {
+      studyMaterials = sheetMaterials;
+    }
+  } catch (error) {
+    console.warn("No se pudo cargar la planilla de materiales. Se usaran datos locales.");
+  }
 }
 
 function renderProfessionals() {
@@ -184,7 +292,12 @@ documentList.addEventListener("click", (event) => {
   }, 1100);
 });
 
-renderStats();
-renderProfessionals();
-renderScholarships();
-renderDocuments();
+async function init() {
+  await loadSheetData();
+  renderStats();
+  renderProfessionals();
+  renderScholarships();
+  renderDocuments();
+}
+
+init();
