@@ -56,8 +56,8 @@ a {
   padding: 32px;
   color: #fff;
   background:
-    linear-gradient(90deg, rgba(2, 5, 11, 0.91) 0%, rgba(5, 17, 34, 0.86) 48%, rgba(2, 5, 11, 0.72) 100%),
-    radial-gradient(circle at 18% 12%, rgba(60, 130, 255, 0.24), transparent 28%),
+    linear-gradient(90deg, rgba(2, 5, 11, 0.86) 0%, rgba(5, 17, 34, 0.74) 48%, rgba(2, 5, 11, 0.4) 100%),
+    radial-gradient(circle at 18% 12%, rgba(60, 130, 255, 0.2), transparent 28%),
     url("./assets/access-wellbeing-bg.png") center center / cover no-repeat,
     linear-gradient(135deg, #02050b 0%, #071528 58%, #000 100%);
 }
@@ -70,7 +70,7 @@ a {
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 72px 72px;
   mask-image: linear-gradient(180deg, transparent, #000 18%, #000 80%, transparent);
-  opacity: 0.58;
+  opacity: 0.38;
   content: "";
 }
 
